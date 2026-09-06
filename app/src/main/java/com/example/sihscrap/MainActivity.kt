@@ -20,12 +20,18 @@ import com.example.sihscrap.data.sync.SyncWorker
 import com.example.sihscrap.theme.SIHScrapTheme
 import com.example.sihscrap.ui.screens.*
 import com.example.sihscrap.voice.VoiceEngine
+import org.osmdroid.config.Configuration
 
 class MainActivity : ComponentActivity() {
     private lateinit var voiceEngine: VoiceEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize OSMDroid globally before ANY map view is created
+        Configuration.getInstance().load(applicationContext, getSharedPreferences("osmdroid", MODE_PRIVATE))
+        Configuration.getInstance().userAgentValue = "SihScrapApp/1.0 (contact@sihscrap.com)"
+
         voiceEngine = VoiceEngine(this)
 
         // Request necessary permissions on startup

@@ -121,10 +121,6 @@ fun LocatorScreen(navController: NavController) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         AndroidView(
                             factory = { ctx ->
-                                // Ensure OSMDroid configuration is loaded synchronously before MapView creation
-                                Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", android.content.Context.MODE_PRIVATE))
-                                Configuration.getInstance().userAgentValue = "SihScrapApp/1.0"
-
                                 MapView(ctx).apply {
                                     setTileSource(TileSourceFactory.MAPNIK)
                                     setMultiTouchControls(true)

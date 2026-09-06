@@ -39,7 +39,7 @@ import com.example.sihscrap.ui.SharedViewModel
 import com.example.sihscrap.ui.ScannedItem
 import com.example.sihscrap.ai.ClassificationResult
 import com.example.sihscrap.ai.MaterialTier
-import com.example.sihscrap.ai.ScrapClassifier
+import com.example.sihscrap.ai.YoloScrapClassifier
 import com.example.sihscrap.ai.ThrottledImageAnalyzer
 import java.util.concurrent.Executors
 
@@ -54,7 +54,7 @@ fun CameraScreen(navController: NavController, sharedViewModel: SharedViewModel)
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val classifier = remember { ScrapClassifier(context) }
+    val classifier = remember { YoloScrapClassifier(context) }
     var currentResult by remember {
         mutableStateOf(
             ClassificationResult(

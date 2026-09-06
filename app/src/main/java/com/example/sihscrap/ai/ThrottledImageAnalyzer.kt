@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
 class ThrottledImageAnalyzer(
-    private val classifier: ScrapClassifier,
+    private val classifier: YoloScrapClassifier,
     private val onResult: (ClassificationResult) -> Unit
 ) : ImageAnalysis.Analyzer {
 

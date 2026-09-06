@@ -1,6 +1,16 @@
-# SIH Smart Scrap & E-Waste Dynamic Valuation Backend
+# SIH Smart Scrap & E-Waste Dynamic Valuation System
 
-A production-grade, human-written **FastAPI** enterprise backend service engineered for the circular economy, informal scrap collection networks (Kabadiwala systems), and government-regulated e-waste/battery recycling hubs under **CPCB** and **SPCB** mandates.
+A production-grade enterprise platform engineered for the circular economy, informal scrap collection networks (Kabadiwala systems), and government-regulated e-waste/battery recycling hubs under **CPCB** and **SPCB** mandates.
+
+---
+
+## 📱 Native Android Mobile App Download & Sideloading
+
+The native Android application built with Jetpack Compose, CameraX, and TensorFlow Lite is available for immediate mobile sideloading:
+
+* **Branch:** [`feature/native-android-app`](https://github.com/Elephantpanda6/sih-scrap-backend/tree/feature/native-android-app)
+* **Direct APK Download:** [Download `app-debug.apk`](https://raw.githubusercontent.com/Elephantpanda6/sih-scrap-backend/feature/native-android-app/app-debug.apk)
+* **Features:** Offline Room DB with Anti-Double-Spend (`SHA-256`), Throttled CameraX ML Scanner (1 frame/1.5s for Android Go), BLE Scale integration, Vernacular Voice Assistant (Hindi & Marathi), and Secret ERSS 112 Duress SOS Calculator.
 
 ---
 

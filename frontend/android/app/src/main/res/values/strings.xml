@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SmartScrap</string>
+    <string name="title_activity_main">SmartScrap</string>
+    <string name="package_name">com.sih.smartscrap</string>
+    <string name="custom_url_scheme">com.sih.smartscrap</string>
+</resources>

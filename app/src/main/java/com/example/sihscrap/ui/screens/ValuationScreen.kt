@@ -147,7 +147,13 @@ fun ValuationScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(item.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                                Text("₹${String.format(Locale.US, "%.2f", finalPayout)}", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("₹${String.format(Locale.US, "%.2f", finalPayout)}", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    IconButton(onClick = { sharedViewModel.removeFromCart(index) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete Item", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             

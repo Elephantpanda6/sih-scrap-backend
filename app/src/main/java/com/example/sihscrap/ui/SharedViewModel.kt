@@ -23,6 +23,12 @@ class SharedViewModel : ViewModel() {
         }
     }
 
+    fun removeFromCart(index: Int) {
+        if (index in cart.indices) {
+            cart.removeAt(index)
+        }
+    }
+
     fun clearCart() {
         cart.clear()
     }

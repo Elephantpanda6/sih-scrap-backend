@@ -7,6 +7,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
@@ -39,6 +41,12 @@ import com.example.sihscrap.ai.ScrapClassifier
 import com.example.sihscrap.ai.ThrottledImageAnalyzer
 import java.util.concurrent.Executors
 
+data class CameraDeviceInfo(
+    val id: String,
+    val label: String,
+    val cameraSelector: CameraSelector
+)
+
 @Composable
 fun CameraScreen(navController: NavController) {
     val context = LocalContext.current
@@ -61,10 +69,53 @@ fun CameraScreen(navController: NavController) {
     var isShutterLocked by remember { mutableStateOf(false) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
 
+    val cameraOptions = remember { mutableStateListOf<CameraDeviceInfo>() }
+    var selectedCameraOption by remember { mutableStateOf<CameraDeviceInfo?>(null) }
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+
     DisposableEffect(Unit) {
         onDispose {
             classifier.close()
             cameraExecutor.shutdown()
+        }
+    }
+
+    LaunchedEffect(selectedCameraOption, cameraProvider, previewViewRef) {
+        val provider = cameraProvider ?: return@LaunchedEffect
+        val pView = previewViewRef ?: return@LaunchedEffect
+        val option = selectedCameraOption ?: return@LaunchedEffect
+
+        try {
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(pView.surfaceProvider)
+            }
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                .build()
+                .also { analysis ->
+                    analysis.setAnalyzer(
+                        cameraExecutor,
+                        ThrottledImageAnalyzer(classifier) { result ->
+                            if (!isShutterLocked) {
+                                currentResult = result
+                            }
+                        }
+                    )
+                }
+
+            provider.unbindAll()
+            provider.bindToLifecycle(
+                lifecycleOwner,
+                option.cameraSelector,
+                preview,
+                imageAnalysis
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -73,35 +124,58 @@ fun CameraScreen(navController: NavController) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
-                val previewView = PreviewView(ctx)
+                val previewView = PreviewView(ctx).apply {
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                }
+                previewViewRef = previewView
+
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                 cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
+                    val provider = cameraProviderFuture.get()
+                    cameraProvider = provider
 
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                        .build()
-                        .also { analysis ->
-                            analysis.setAnalyzer(
-                                cameraExecutor,
-                                ThrottledImageAnalyzer(classifier) { result ->
-                                    if (!isShutterLocked) {
-                                        currentResult = result
-                                    }
-                                }
-                            )
-                        }
-
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                    val discovered = mutableListOf<CameraDeviceInfo>()
                     try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalysis)
+                        provider.availableCameraInfos.forEachIndexed { index, info ->
+                            val lensFacing = try { info.lensFacing } catch (e: Exception) { -1 }
+                            val label = when (lensFacing) {
+                                CameraSelector.LENS_FACING_BACK -> if (index == 0) "Back Camera (Rear)" else "Back Camera #$index"
+                                CameraSelector.LENS_FACING_FRONT -> if (index == 1 || index == 0) "Front Camera (Selfie)" else "Front Camera #$index"
+                                CameraSelector.LENS_FACING_EXTERNAL -> "External Camera #$index"
+                                else -> "Camera #$index"
+                            }
+                            val selector = try {
+                                info.cameraSelector
+                            } catch (e: Throwable) {
+                                when (lensFacing) {
+                                    CameraSelector.LENS_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+                                    else -> CameraSelector.DEFAULT_BACK_CAMERA
+                                }
+                            }
+                            discovered.add(CameraDeviceInfo(id = "cam_$index", label = label, cameraSelector = selector))
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
+                    }
+
+                    if (discovered.isEmpty()) {
+                        if (provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+                            discovered.add(CameraDeviceInfo("back", "Back Camera (Rear)", CameraSelector.DEFAULT_BACK_CAMERA))
+                        }
+                        if (provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+                            discovered.add(CameraDeviceInfo("front", "Front Camera (Selfie)", CameraSelector.DEFAULT_FRONT_CAMERA))
+                        }
+                    }
+                    if (discovered.isEmpty()) {
+                        discovered.add(CameraDeviceInfo("default", "Default Camera", CameraSelector.DEFAULT_BACK_CAMERA))
+                    }
+
+                    cameraOptions.clear()
+                    cameraOptions.addAll(discovered)
+
+                    if (selectedCameraOption == null) {
+                        selectedCameraOption = discovered.firstOrNull { it.label.contains("Back", ignoreCase = true) }
+                            ?: discovered.firstOrNull()
                     }
                 }, ContextCompat.getMainExecutor(ctx))
                 previewView
@@ -156,6 +230,95 @@ fun CameraScreen(navController: NavController) {
                 modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+
+            // Camera Selection Dropdown Menu
+            Box {
+                Surface(
+                    onClick = { isDropdownExpanded = !isDropdownExpanded },
+                    color = Color.Black.copy(alpha = 0.65f),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Camera,
+                            contentDescription = "Select Camera",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = selectedCameraOption?.label ?: "Select Camera",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown Menu",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = isDropdownExpanded,
+                    onDismissRequest = { isDropdownExpanded = false },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surface)
+                        .widthIn(min = 200.dp)
+                ) {
+                    if (cameraOptions.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Detecting cameras...", fontSize = 13.sp) },
+                            onClick = {},
+                            enabled = false
+                        )
+                    } else {
+                        cameraOptions.forEach { option ->
+                            val isSelected = option.id == selectedCameraOption?.id
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = option.label,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                onClick = {
+                                    selectedCameraOption = option
+                                    isDropdownExpanded = false
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Camera,
+                                        contentDescription = null,
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                trailingIcon = if (isSelected) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                } else null
+                            )
+                        }
+                    }
+                }
             }
 
             // Material Tier Badge

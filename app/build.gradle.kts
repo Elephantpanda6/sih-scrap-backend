@@ -107,6 +107,9 @@ dependencies {
   // TensorFlow Lite
   implementation("org.tensorflow:tensorflow-lite:2.16.1")
 
+  // ONNX Runtime
+  implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.1")
+
   // Compose Icons Extended
   implementation("androidx.compose.material:material-icons-extended")
 

@@ -112,6 +112,14 @@ class ScrapClassifier(private val context: Context) {
         }
     }
 
+    
+    // TODO(YOLO-SEG): Upgrade to YOLOv8-Seg Nano Inference 
+    // The current buffer is [1, num_classes]. YOLO-Seg requires two output buffers:
+    // Output 0 (Detections): [1, 4 + num_classes + 32_mask_weights, 1024]
+    // Output 1 (Prototypes): [1, 32, 56, 56]
+    
+    // fun processYoloSegmentation(bitmap: Bitmap): ClassificationResult { ... }
+
     fun analyzeBitmap(bitmap: Bitmap): ClassificationResult {
         val scaled = if (bitmap.width != MODEL_INPUT_SIZE || bitmap.height != MODEL_INPUT_SIZE) {
             Bitmap.createScaledBitmap(bitmap, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE, true)

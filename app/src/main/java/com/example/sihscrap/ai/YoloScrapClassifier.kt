@@ -95,4 +95,9 @@ class YoloScrapClassifier(private val context: Context) {
         // ONLY analyzes pixels where mask[y/4][x/4] == true
         return 12.5f
     }
+    
+    fun close() {
+        ortSession?.close()
+        ortEnv?.close()
+    }
 }

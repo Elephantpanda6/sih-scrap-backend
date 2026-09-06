@@ -2,10 +2,10 @@ import os
 from ultralytics import YOLO
 
 def train_and_export():
-    print("Initializing YOLOv8 Nano Segmentation Model...")
-    model = YOLO('yolov8n-seg.pt')
+    print("Initializing YOLOv8 Nano Object Detection Model...")
+    model = YOLO('yolov8n.pt')
     
-    dataset_yaml = 'data.yaml' 
+    dataset_yaml = 'dataset/data.yaml' 
     
     if not os.path.exists(dataset_yaml):
         print(f"Error: {dataset_yaml} not found.")
@@ -16,18 +16,18 @@ def train_and_export():
     print(f"Starting training on {dataset_yaml}...")
     model.train(
         data=dataset_yaml,
-        epochs=50,
+        epochs=1,
         imgsz=224, 
         batch=16,
+        device='cpu',
         name='scrap_seg_model'
     )
     
     print("Training complete. Exporting model to TensorFlow Lite (LiteRT)...")
     export_path = model.export(
-        format='tflite',
+        format='litert',
         imgsz=224,
-        int8=True,
-        optimize=True
+        int8=True
     )
     
     print(f"Export successful! TFLite model saved at: {export_path}")

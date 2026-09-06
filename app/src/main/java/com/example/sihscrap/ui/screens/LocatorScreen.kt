@@ -119,13 +119,12 @@ fun LocatorScreen(navController: NavController) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        LaunchedEffect(Unit) {
-                            Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", android.content.Context.MODE_PRIVATE))
-                            Configuration.getInstance().userAgentValue = context.packageName
-                        }
-
                         AndroidView(
                             factory = { ctx ->
+                                // Ensure OSMDroid configuration is loaded synchronously before MapView creation
+                                Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", android.content.Context.MODE_PRIVATE))
+                                Configuration.getInstance().userAgentValue = "SihScrapApp/1.0"
+
                                 MapView(ctx).apply {
                                     setTileSource(TileSourceFactory.MAPNIK)
                                     setMultiTouchControls(true)

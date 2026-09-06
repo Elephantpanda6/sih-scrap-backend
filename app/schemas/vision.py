@@ -17,22 +17,14 @@ class OfflineVisionAnalysisResponse(BaseModel):
     filename: str
     image_resolution: str
     primary_category_detected: str
-    
-    # Quantitative Physical, Optical & Metallurgical Metrics
     surface_rust_percentage: float
     contamination_percentage: float
     metallic_reflectance_score: float
     texture_edge_density: float
-    cleanliness_grade: str  # "Grade A (Clean)", "Grade B (Moderate Rust)", "Grade C (Heavy Contamination)"
-    
-    # Detected Scrap Commodities
+    cleanliness_grade: str
     detected_components: List[VisualDetectionItem]
     estimated_price_range_inr: Tuple[float, float]
-    
-    # Instant vernacular spoken guidance for low-literacy field dealers
     voice_feedback_hi: str
     voice_feedback_mr: str
-    
-    # Actionable operational instructions
     next_step_action: str
-    model_architecture: str = "MobileNet-V3-Small / Embedded CPU Multi-Spectral Heuristic"
+    model_architecture: str = 'MobileNet-V3-Small / Embedded CPU Multi-Spectral Heuristic'

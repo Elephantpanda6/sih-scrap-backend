@@ -1,13 +1,10 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 
-# =============================================================================
-# Legacy Schemas (Maintained for backward compatibility with mobile apps)
-# =============================================================================
 class MaterialInput(BaseModel):
-    material_code: str = Field(..., examples=["copper_bare_bright"])
+    material_code: str = Field(..., examples=['copper_bare_bright'])
     weight_kg: float = Field(..., gt=0, examples=[2.5])
-    purity_factor: Optional[float] = Field(None, ge=0.05, le=1.0, examples=[0.90])
+    purity_factor: Optional[float] = Field(None, ge=0.05, le=1.0, examples=[0.9])
 
 class ComponentBreakdown(BaseModel):
     material_code: str
@@ -22,7 +19,7 @@ class PriceCalculationRequest(BaseModel):
     salvage_value: float = Field(0.0, ge=0, examples=[50.0])
     distance_km: float = Field(0.0, ge=0, examples=[3.5])
     custom_margin: Optional[float] = Field(None, ge=0, le=0.5, examples=[0.15])
-    item_description: Optional[str] = Field(None, examples=["Ceiling Fan or Laptop Scrap"])
+    item_description: Optional[str] = Field(None, examples=['Ceiling Fan or Laptop Scrap'])
 
 class PriceCalculationResponse(BaseModel):
     gross_material_value: float
@@ -34,17 +31,14 @@ class PriceCalculationResponse(BaseModel):
     recommended_dealer_payout: float
     price_range_low: float
     price_range_high: float
-    currency: str = "INR"
+    currency: str = 'INR'
     breakdown: List[ComponentBreakdown]
     calculation_summary_hindi: str
 
-# =============================================================================
-# Modern Hierarchical Schemas (Enterprise SIH Grade)
-# =============================================================================
 class MaterialComponentInput(BaseModel):
-    subcategory_code: str = Field(..., examples=["copper_bare_bright", "e_waste_pcb_high"])
+    subcategory_code: str = Field(..., examples=['copper_bare_bright', 'e_waste_pcb_high'])
     weight_kg: float = Field(..., gt=0, examples=[4.5])
-    purity_override: Optional[float] = Field(None, ge=0.05, le=1.0, examples=[0.90])
+    purity_override: Optional[float] = Field(None, ge=0.05, le=1.0, examples=[0.9])
     rust_level_percentage: Optional[float] = Field(0.0, ge=0.0, le=100.0, examples=[15.0])
     contamination_level_percentage: Optional[float] = Field(0.0, ge=0.0, le=100.0, examples=[5.0])
 

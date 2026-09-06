@@ -3,17 +3,17 @@ from typing import Optional
 from datetime import datetime
 
 class UserBase(BaseModel):
-    phone_number: str = Field(..., examples=["9876543210"])
-    full_name: Optional[str] = Field(None, examples=["Ramesh Kumar"])
-    role: str = Field("scrap_dealer", examples=["scrap_dealer"]) # "scrap_dealer" or "buyer"
-    preferred_language: str = Field("hi", examples=["hi"])       # "hi", "mr", "en"
+    phone_number: str = Field(..., examples=['9876543210'])
+    full_name: Optional[str] = Field(None, examples=['Ramesh Kumar'])
+    role: str = Field('scrap_dealer', examples=['scrap_dealer'])
+    preferred_language: str = Field('hi', examples=['hi'])
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=4, examples=["1234"])
+    password: str = Field(..., min_length=4, examples=['1234'])
 
 class UserLogin(BaseModel):
-    phone_number: str = Field(..., examples=["9876543210"])
-    password: str = Field(..., examples=["1234"])
+    phone_number: str = Field(..., examples=['9876543210'])
+    password: str = Field(..., examples=['1234'])
 
 class UserOut(UserBase):
     id: int
@@ -23,7 +23,7 @@ class UserOut(UserBase):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = 'bearer'
     user: UserOut
 
 class TokenData(BaseModel):

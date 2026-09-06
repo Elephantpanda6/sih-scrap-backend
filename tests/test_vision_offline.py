@@ -3,60 +3,45 @@ from PIL import Image
 import pytest
 
 def create_synthetic_scrap_image(color: tuple, size=(224, 224)) -> bytes:
-    img = Image.new("RGB", size, color=color)
+    img = Image.new('RGB', size, color=color)
     buf = io.BytesIO()
-    img.save(buf, format="JPEG")
+    img.save(buf, format='JPEG')
     return buf.getvalue()
 
 def test_offline_vision_rust_analysis(client):
-    # Synthetic reddish-brown rusty iron patch: R=160, G=50, B=30
     rust_bytes = create_synthetic_scrap_image((160, 50, 30))
-    res = client.post(
-        "/api/v1/vision/analyze-image",
-        files={"file": ("rusty_beam.jpg", rust_bytes, "image/jpeg")}
-    )
+    res = client.post('/api/v1/vision/analyze-image', files={'file': ('rusty_beam.jpg', rust_bytes, 'image/jpeg')})
     assert res.status_code == 200
     data = res.json()
-    assert data["surface_rust_percentage"] > 50.0
-    assert data["primary_category_detected"] == "ferrous"
-    assert "गंज" in data["voice_feedback_mr"]
-    assert "जंग" in data["voice_feedback_hi"]
-    assert "Grade C" in data["cleanliness_grade"] or "Grade B" in data["cleanliness_grade"]
-    assert "MobileNet" in data["model_architecture"]
+    assert data['surface_rust_percentage'] > 50.0
+    assert data['primary_category_detected'] == 'ferrous'
+    assert 'गंज' in data['voice_feedback_mr']
+    assert 'जंग' in data['voice_feedback_hi']
+    assert 'Grade C' in data['cleanliness_grade'] or 'Grade B' in data['cleanliness_grade']
+    assert 'MobileNet' in data['model_architecture']
 
 def test_offline_vision_pcb_analysis(client):
-    # Synthetic green circuit board patch: R=30, G=140, B=40
     pcb_bytes = create_synthetic_scrap_image((30, 140, 40))
-    res = client.post(
-        "/api/v1/vision/analyze-image",
-        files={"file": ("server_board.jpg", pcb_bytes, "image/jpeg")}
-    )
+    res = client.post('/api/v1/vision/analyze-image', files={'file': ('server_board.jpg', pcb_bytes, 'image/jpeg')})
     assert res.status_code == 200
     data = res.json()
-    assert data["primary_category_detected"] == "e_waste"
-    assert len(data["detected_components"]) >= 1
-    assert data["detected_components"][0]["detected_subcategory_code"] == "e_waste_pcb_high"
-    assert "सर्किट बोर्ड" in data["voice_feedback_hi"]
-    assert "सर्किट बोर्ड" in data["voice_feedback_mr"]
-    assert data["detected_components"][0]["confidence_score"] > 0.90
+    assert data['primary_category_detected'] == 'e_waste'
+    assert len(data['detected_components']) >= 1
+    assert data['detected_components'][0]['detected_subcategory_code'] == 'e_waste_pcb_high'
+    assert 'सर्किट बोर्ड' in data['voice_feedback_hi']
+    assert 'सर्किट बोर्ड' in data['voice_feedback_mr']
+    assert data['detected_components'][0]['confidence_score'] > 0.9
 
 def test_offline_vision_copper_analysis(client):
-    # Synthetic bare bright copper wire patch: R=180, G=105, B=50
     copper_bytes = create_synthetic_scrap_image((180, 105, 50))
-    res = client.post(
-        "/api/v1/vision/analyze-image",
-        files={"file": ("copper_wire.jpg", copper_bytes, "image/jpeg")}
-    )
+    res = client.post('/api/v1/vision/analyze-image', files={'file': ('copper_wire.jpg', copper_bytes, 'image/jpeg')})
     assert res.status_code == 200
     data = res.json()
-    assert data["primary_category_detected"] == "non_ferrous"
-    assert data["detected_components"][0]["detected_subcategory_code"] == "copper_bare_bright"
-    assert "तांब" in data["voice_feedback_mr"] or "तांब" in data["voice_feedback_hi"]
+    assert data['primary_category_detected'] == 'non_ferrous'
+    assert data['detected_components'][0]['detected_subcategory_code'] == 'copper_bare_bright'
+    assert 'तांब' in data['voice_feedback_mr'] or 'तांब' in data['voice_feedback_hi']
 
 def test_offline_vision_invalid_file_rejected(client):
-    res = client.post(
-        "/api/v1/vision/analyze-image",
-        files={"file": ("document.pdf", b"%PDF-1.4 dummy", "application/pdf")}
-    )
+    res = client.post('/api/v1/vision/analyze-image', files={'file': ('document.pdf', b'%PDF-1.4 dummy', 'application/pdf')})
     assert res.status_code == 400
-    assert "valid jpeg/png image" in res.json()["detail"].lower()
+    assert 'valid jpeg/png image' in res.json()['detail'].lower()

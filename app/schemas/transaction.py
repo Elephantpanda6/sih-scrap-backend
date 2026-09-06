@@ -3,17 +3,17 @@ from typing import Optional
 from datetime import datetime
 
 class TransactionCreate(BaseModel):
-    material_code: str = Field(..., examples=["iron_hms_heavy"])
+    material_code: str = Field(..., examples=['iron_hms_heavy'])
     weight_kg: float = Field(..., gt=0, examples=[25.0])
     purity_factor: Optional[float] = Field(1.0, ge=0.1, le=1.0)
-    pickup_address: Optional[str] = Field(None, examples=["Shop 4, Gandhi Chowk, Sector 12"])
+    pickup_address: Optional[str] = Field(None, examples=['Shop 4, Gandhi Chowk, Sector 12'])
     pickup_latitude: Optional[float] = None
     pickup_longitude: Optional[float] = None
     notes: Optional[str] = None
     voice_input_transcript: Optional[str] = None
 
 class TransactionUpdate(BaseModel):
-    status: Optional[str] = Field(None, examples=["accepted"])
+    status: Optional[str] = Field(None, examples=['accepted'])
     buyer_id: Optional[int] = None
     final_agreed_price: Optional[float] = None
     notes: Optional[str] = None

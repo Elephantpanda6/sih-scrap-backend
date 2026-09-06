@@ -109,4 +109,7 @@ dependencies {
 
   // Compose Icons Extended
   implementation("androidx.compose.material:material-icons-extended")
+
+  // OSMDroid for offline maps
+  implementation("org.osmdroid:osmdroid-android:6.1.18")
 }

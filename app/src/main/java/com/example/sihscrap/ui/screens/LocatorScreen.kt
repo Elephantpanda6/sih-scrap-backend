@@ -22,10 +22,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.sihscrap.api.NearestRecyclerItem
 import com.example.sihscrap.data.ScrapRepository
 import kotlinx.coroutines.launch
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,52 +119,40 @@ fun LocatorScreen(navController: NavController) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val center = Offset(size.width / 2f, size.height / 2f)
-                            val maxRadius = Math.min(size.width, size.height) * 0.42f
-
-                            // Radar range rings
-                            drawCircle(Color.Gray.copy(alpha = 0.2f), radius = maxRadius * 0.33f, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
-                            drawCircle(Color.Gray.copy(alpha = 0.2f), radius = maxRadius * 0.66f, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
-                            drawCircle(Color.Gray.copy(alpha = 0.2f), radius = maxRadius, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
-
-                            // Collector GPS position (Center)
-                            drawCircle(Color(0xFF2196F3), radius = 14f, center = center)
-
-                            // Facility positions
-                            recyclers.forEachIndexed { index, item ->
-                                val angle = (index * 1.8f)
-                                val distFraction = (item.distance_km / 50.0).coerceIn(0.2, 0.9).toFloat()
-                                val x = center.x + Math.cos(angle.toDouble()).toFloat() * maxRadius * distFraction
-                                val y = center.y + Math.sin(angle.toDouble()).toFloat() * maxRadius * distFraction
-                                drawCircle(Color(0xFF00C853), radius = 18f, center = Offset(x, y))
-                            }
+                        LaunchedEffect(Unit) {
+                            Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", android.content.Context.MODE_PRIVATE))
+                            Configuration.getInstance().userAgentValue = context.packageName
                         }
 
-                        Column(
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                "Collector GPS Origin (Blue) & Recyclers (Green)",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Button(onClick = {
-                                val geoUri = Uri.parse("geo:$userLat,$userLon?q=scrap+recycling")
-                                val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
-                                mapIntent.setPackage("com.google.android.apps.maps")
-                                try {
-                                    context.startActivity(mapIntent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Google Maps app not found", Toast.LENGTH_SHORT).show()
+                        AndroidView(
+                            factory = { ctx ->
+                                MapView(ctx).apply {
+                                    setTileSource(TileSourceFactory.MAPNIK)
+                                    setMultiTouchControls(true)
+                                    controller.setZoom(13.0)
+                                    controller.setCenter(GeoPoint(userLat, userLon))
+                                    
+                                    val userMarker = Marker(this)
+                                    userMarker.position = GeoPoint(userLat, userLon)
+                                    userMarker.title = "Your Location"
+                                    userMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                    overlays.add(userMarker)
+
+                                    recyclers.forEach { item ->
+                                        val marker = Marker(this)
+                                        marker.position = GeoPoint(item.recycler.latitude, item.recycler.longitude)
+                                        marker.title = item.recycler.name
+                                        marker.snippet = "${item.distance_km} km away"
+                                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                        overlays.add(marker)
+                                    }
                                 }
-                            }) {
-                                Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Open in Google Maps (Offline Supported)", fontSize = 12.sp)
-                            }
-                        }
+                            },
+                            update = { view ->
+                                view.controller.setCenter(GeoPoint(userLat, userLon))
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }

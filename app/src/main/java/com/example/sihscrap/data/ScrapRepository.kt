@@ -54,15 +54,18 @@ class ScrapRepository(private val context: Context) {
         latitude: Double,
         longitude: Double,
         voiceTranscript: String? = null,
-        notes: String? = null
+        notes: String? = null,
+        receiptHashOverride: String? = null
     ): TransactionEntity = withContext(Dispatchers.IO) {
         val material = catalogDao.getByCode(materialCode)
             ?: catalogDao.all.firstOrNull()
             ?: MaterialCatalogEntity("copper_bare_bright", "Copper Bare Bright", "तांबा", "तांबे", "non_ferrous", 695.0, 5.0, 0.99, 4.5, "EMERALD_GREEN")
 
-        val nonce = AntiDoubleSpendEngine.generateNonce()
-        val epochMillis = System.currentTimeMillis()
-        val receiptHash = AntiDoubleSpendEngine.generateReceiptHash(latitude, longitude, nonce, epochMillis)
+        val receiptHash = receiptHashOverride ?: run {
+            val nonce = AntiDoubleSpendEngine.generateNonce()
+            val epochMillis = System.currentTimeMillis()
+            AntiDoubleSpendEngine.generateReceiptHash(latitude, longitude, nonce, epochMillis)
+        }
 
         // Prevent double spend
         val existing = transactionDao.getByReceiptHash(receiptHash)

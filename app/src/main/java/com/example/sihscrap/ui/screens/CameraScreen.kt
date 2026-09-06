@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.example.sihscrap.ui.SharedViewModel
+import com.example.sihscrap.ui.ScannedItem
 import com.example.sihscrap.ai.ClassificationResult
 import com.example.sihscrap.ai.MaterialTier
 import com.example.sihscrap.ai.ScrapClassifier
@@ -48,7 +50,7 @@ data class CameraDeviceInfo(
 )
 
 @Composable
-fun CameraScreen(navController: NavController) {
+fun CameraScreen(navController: NavController, sharedViewModel: SharedViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -409,28 +411,50 @@ fun CameraScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Single-Tap Capture & Lock Button
-                    Button(
-                        onClick = {
-                            isShutterLocked = true
-                            navController.navigate(
-                                "calculator?code=${currentResult.categoryCode}&rust=${currentResult.rustPercentage}&name=${currentResult.categoryName}"
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = tierColor)
+                    // Multi-item Cart Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.Camera, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Lock & Valuate Scrap",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
+                        Button(
+                            onClick = {
+                                sharedViewModel.addToCart(
+                                    ScannedItem(
+                                        code = currentResult.categoryCode,
+                                        name = currentResult.categoryName,
+                                        rust = currentResult.rustPercentage,
+                                        weight = 5.0
+                                    )
+                                )
+                                // We don't lock the shutter or navigate, allowing continuous scanning!
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = tierColor)
+                        ) {
+                            Icon(Icons.Default.Camera, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add to Batch", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+
+                        if (sharedViewModel.cart.isNotEmpty()) {
+                            Button(
+                                onClick = {
+                                    navController.navigate("calculator")
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Review (${sharedViewModel.cart.size})", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
                     }
                 }
             }

@@ -20,6 +20,9 @@ import com.example.sihscrap.data.sync.SyncWorker
 import com.example.sihscrap.theme.SIHScrapTheme
 import com.example.sihscrap.ui.screens.*
 import com.example.sihscrap.voice.VoiceEngine
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sihscrap.ui.SharedViewModel
+
 import org.osmdroid.config.Configuration
 
 class MainActivity : ComponentActivity() {
@@ -46,44 +49,25 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
+
+
+
                     val navController = rememberNavController()
+                    val sharedViewModel: SharedViewModel = viewModel()
+                    
                     NavHost(navController = navController, startDestination = "dashboard") {
                         composable("dashboard") {
                             DashboardScreen(navController, voiceEngine)
                         }
                         composable("camera") {
-                            CameraScreen(navController)
+                            CameraScreen(navController, sharedViewModel)
                         }
-                        composable(
-                            route = "calculator?code={code}&rust={rust}&weight={weight}&name={name}",
-                            arguments = listOf(
-                                navArgument("code") {
-                                    type = NavType.StringType
-                                    defaultValue = "copper_bare_bright"
-                                },
-                                navArgument("rust") {
-                                    type = NavType.FloatType
-                                    defaultValue = 0f
-                                },
-                                navArgument("weight") {
-                                    type = NavType.FloatType
-                                    defaultValue = 5f
-                                },
-                                navArgument("name") {
-                                    type = NavType.StringType
-                                    defaultValue = "Copper Bare Bright"
-                                }
-                            )
-                        ) { backStackEntry ->
-                            val code = backStackEntry.arguments?.getString("code") ?: "copper_bare_bright"
-                            val rust = backStackEntry.arguments?.getFloat("rust") ?: 0f
-                            val weight = backStackEntry.arguments?.getFloat("weight")?.toDouble() ?: 5.0
+                        composable("calculator") {
                             ValuationScreen(
                                 navController = navController,
                                 voiceEngine = voiceEngine,
-                                initialCode = code,
-                                initialRust = rust,
-                                initialWeight = weight
+                                sharedViewModel = sharedViewModel
                             )
                         }
                         composable("voice") {

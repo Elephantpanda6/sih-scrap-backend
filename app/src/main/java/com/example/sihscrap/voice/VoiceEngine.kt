@@ -183,6 +183,7 @@ class VoiceEngine(private val context: Context) : TextToSpeech.OnInitListener {
         if (status == TextToSpeech.SUCCESS) {
             isTtsReady = true
             updateTtsLanguage()
+            tts.setSpeechRate(1.35f) // Speed up the voice of the system
             Log.d(TAG, "TTS initialized successfully.")
         } else {
             Log.w(TAG, "TTS initialization failed with status: $status")

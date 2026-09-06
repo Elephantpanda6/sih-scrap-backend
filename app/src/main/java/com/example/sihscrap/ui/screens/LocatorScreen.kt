@@ -34,6 +34,8 @@ fun LocatorScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val repository = remember { ScrapRepository(context) }
 
+    var userLat by remember { mutableStateOf(18.5204) }
+    var userLon by remember { mutableStateOf(73.8567) }
     var recyclers by remember { mutableStateOf<List<NearestRecyclerItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) } // 0: List, 1: Map View
@@ -41,7 +43,20 @@ fun LocatorScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         isLoading = true
-        val list = repository.getNearbyRecyclers(18.5204, 73.8567)
+        try {
+            val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+            var location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+            if (location == null) {
+                location = locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+            }
+            if (location != null) {
+                userLat = location.latitude
+                userLon = location.longitude
+            }
+        } catch (e: SecurityException) {
+            // Permissions missing, fallback to default
+        }
+        val list = repository.getNearbyRecyclers(userLat, userLon)
         recyclers = list
         isLoading = false
     }
@@ -120,13 +135,30 @@ fun LocatorScreen(navController: NavController) {
                             }
                         }
 
-                        Text(
-                            "Collector GPS Origin (Blue) & Recyclers (Green)",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(8.dp)
-                        )
+                        Column(
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "Collector GPS Origin (Blue) & Recyclers (Green)",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Button(onClick = {
+                                val geoUri = Uri.parse("geo:$userLat,$userLon?q=scrap+recycling")
+                                val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+                                mapIntent.setPackage("com.google.android.apps.maps")
+                                try {
+                                    context.startActivity(mapIntent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Google Maps app not found", Toast.LENGTH_SHORT).show()
+                                }
+                            }) {
+                                Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Open in Google Maps (Offline Supported)", fontSize = 12.sp)
+                            }
+                        }
                     }
                 }
             }
